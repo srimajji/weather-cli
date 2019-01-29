@@ -1,4 +1,4 @@
-package weather
+package main
 
 import (
 	"encoding/json"
@@ -88,19 +88,17 @@ func KelvinToFahrenheit(k float32) float32 {
 
 func main() {
 
-	var cityParam string
-
 	app := cli.NewApp()
 	app.Name = "Minimal weather"
-	app.Usage = "Get current weather for a city"
+	app.Usage = "Get current weather for a city with `weather san francisco`"
 
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "city",
-			Value:       "San Francisco, US",
-			Destination: &cityParam,
-		},
-	}
+	// app.Flags = []cli.Flag{
+	// 	cli.StringFlag{
+	// 		Name:        "city",
+	// 		Value:       "San Francisco, US",
+	// 		Destination: &cityParam,
+	// 	},
+	// }
 
 	app.Action = func(ctx *cli.Context) error {
 		// On ^C, handle exit
@@ -114,7 +112,17 @@ func main() {
 			}
 		}()
 
-		apiToken := os.getEnv("API_TOKEN")
+		// get first argument
+		var cityParam string
+		cityArgs := ctx.Args()
+		for i := 0; i < len(cityArgs); i++ {
+			cityParam += cityArgs.Get(i) + " "
+		}
+		if cityParam == "" {
+			cityParam = "San Francisco, US"
+		}
+
+		apiToken := os.Getenv("API_TOKEN")
 
 		weatherAPI := "https://api.openweathermap.org/data/2.5/weather?APPID=" + apiToken + "&q=" + cityParam
 
@@ -142,7 +150,8 @@ func main() {
 			panic(err)
 		}
 
-		weatherIntoASCII := figure.NewFigure(jsonBody.Name, "doom", true)
+		cityLocation := jsonBody.Name + ", " + jsonBody.Sys.Country
+		weatherIntoASCII := figure.NewFigure(cityLocation, "doom", true)
 		weatherIntoASCII.Print()
 
 		temperatureInF := KelvinToFahrenheit(jsonBody.Main.Temp)
